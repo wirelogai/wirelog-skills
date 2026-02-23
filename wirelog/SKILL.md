@@ -101,7 +101,7 @@ Replace placeholders with your real event names.
 ## Example curl
 
 ```bash
-curl -X POST https://wirelog.ai/query \
+curl -X POST https://api.wirelog.ai/query \
   -H "X-API-Key: sk_YOUR_SECRET_KEY" \
   -H "Content-Type: application/json" \
   -d '{"q":"* | last 30d | count by event_type | top 20"}'

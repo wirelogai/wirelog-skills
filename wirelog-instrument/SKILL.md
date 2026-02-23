@@ -110,9 +110,9 @@ For strong B2B/B2C analysis, send these via `/identify`:
 ## JS SDK (Browser)
 
 ```html
-<script src="https://wirelog.ai/public/wirelog.js"
+<script src="https://cdn.wirelog.ai/public/wirelog.js"
         data-key="pk_YOUR_PUBLIC_KEY"
-        data-host="https://wirelog.ai"></script>
+        data-host="https://api.wirelog.ai"></script>
 ```
 
 The SDK auto-tracks page views, manages `device_id` (localStorage), `session_id` (30-min timeout), and batches events (flush every 2s or 10 events).
@@ -134,13 +134,13 @@ wl.flush();
 
 ```bash
 # Track
-curl -X POST https://wirelog.ai/track \
+curl -X POST https://api.wirelog.ai/track \
   -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
   -H "Content-Type: application/json" \
   -d '{"event_type":"signup","user_id":"u_123","event_properties":{"plan":"free"}}'
 
 # Identify
-curl -X POST https://wirelog.ai/identify \
+curl -X POST https://api.wirelog.ai/identify \
   -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
   -H "Content-Type: application/json" \
   -d '{"user_id":"u_123","device_id":"dev_abc","user_properties":{"email":"u_123@acme.org"}}'
@@ -159,7 +159,7 @@ def track(event_type, user_id=None, props=None):
     if props:
         body["event_properties"] = props
     req = Request(
-        "https://wirelog.ai/track",
+        "https://api.wirelog.ai/track",
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", "X-API-Key": "pk_YOUR_KEY"},
         method="POST",
@@ -173,7 +173,7 @@ track("signup", "u_123", {"plan": "free"})
 ### Node.js (fetch)
 
 ```javascript
-await fetch("https://wirelog.ai/track", {
+await fetch("https://api.wirelog.ai/track", {
   method: "POST",
   headers: {"Content-Type": "application/json", "X-API-Key": "pk_YOUR_KEY"},
   body: JSON.stringify({event_type: "signup", user_id: "u_123", event_properties: {plan: "free"}}),

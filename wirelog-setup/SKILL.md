@@ -32,7 +32,7 @@ Go to https://wirelog.ai and sign in with GitHub. This creates your user and def
 If you have an org admin key (`ak_`):
 
 ```bash
-curl -X POST https://wirelog.ai/api/admin/projects \
+curl -X POST https://api.wirelog.ai/api/admin/projects \
   -H "X-API-Key: ak_YOUR_ADMIN_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name":"my-app-prod"}'
@@ -47,9 +47,9 @@ Response includes `public_key` (pk_) and `secret_key` (sk_). Store the secret ke
 Add to your HTML `<head>`:
 
 ```html
-<script src="https://wirelog.ai/public/wirelog.js"
+<script src="https://cdn.wirelog.ai/public/wirelog.js"
         data-key="pk_YOUR_PUBLIC_KEY"
-        data-host="https://wirelog.ai"></script>
+        data-host="https://api.wirelog.ai"></script>
 ```
 
 This auto-tracks page views and manages device/session IDs.
@@ -57,7 +57,7 @@ This auto-tracks page views and manages device/session IDs.
 ### Server-Side (any language)
 
 ```bash
-curl -X POST https://wirelog.ai/track \
+curl -X POST https://api.wirelog.ai/track \
   -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
   -H "Content-Type: application/json" \
   -d '{"event_type":"test_event","user_id":"setup-test","event_properties":{"source":"setup-verification"}}'
@@ -70,7 +70,7 @@ The public key (`pk_`) is safe for client-side code — it can only ingest event
 Query to confirm events are flowing:
 
 ```bash
-curl -X POST https://wirelog.ai/query \
+curl -X POST https://api.wirelog.ai/query \
   -H "X-API-Key: sk_YOUR_SECRET_KEY" \
   -H "Content-Type: application/json" \
   -d '{"q":"* | last 1d | count by event_type"}'
@@ -83,7 +83,7 @@ You should see your `test_event` (or page views from the JS SDK) in the Markdown
 When a user logs in or signs up, call identify to bind their device to their user ID:
 
 ```bash
-curl -X POST https://wirelog.ai/identify \
+curl -X POST https://api.wirelog.ai/identify \
   -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
   -H "Content-Type: application/json" \
   -d '{
