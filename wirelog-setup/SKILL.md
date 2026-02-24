@@ -6,13 +6,15 @@ version: 1.0.0
 
 # WireLog Setup Skill
 
-Set up a new WireLog analytics project. This skill covers account creation, project setup, API key retrieval, and verification.
+Set up a new WireLog analytics project. This skill covers account creation, project setup, and verification.
+
+For latest documentation: https://docs.wirelog.ai/llms.txt
 
 ## Overview
 
-WireLog is headless analytics for AI agents and LLMs. You track events via HTTP, query with a pipe DSL, and get Markdown back. No dashboards — your agent is the dashboard.
+WireLog is headless analytics for AI agents and LLMs. You track events via HTTP, query with a pipe DSL, and get Markdown back. No dashboards -- your agent is the dashboard.
 
-**Hierarchy:** User → Organization → Project(s). Each project gets a `pk_` (public) and `sk_` (secret) key.
+**Hierarchy:** User -> Organization -> Project(s). Each project gets a `pk_` (public) and `sk_` (secret) key.
 
 ## Step 1: Sign Up
 
@@ -38,13 +40,13 @@ curl -X POST https://api.wirelog.ai/api/admin/projects \
   -d '{"name":"my-app-prod"}'
 ```
 
-Response includes `public_key` (pk_) and `secret_key` (sk_). Store the secret key securely — it's only shown once.
+Response includes `public_key` (pk_) and `secret_key` (sk_). Store the secret key securely -- it's only shown once.
 
 ## Step 3: Add Tracking
 
-### Browser (JS SDK)
+### Browser (recommended for web apps)
 
-Add to your HTML `<head>`:
+Add the JS SDK to your HTML `<head>`:
 
 ```html
 <script src="https://cdn.wirelog.ai/public/wirelog.js"
@@ -53,9 +55,21 @@ Add to your HTML `<head>`:
 ```
 
 This auto-tracks page views and manages device/session IDs.
-It also marks browser-origin events with `clientOriginated: true`.
 
-### Server-Side (any language)
+### TypeScript / Node.js
+
+```bash
+npm install wirelog
+```
+
+```typescript
+import { wl } from "wirelog";
+
+wl.init({ apiKey: "pk_YOUR_PUBLIC_KEY" });
+wl.track({ event_type: "test_event", event_properties: { source: "setup-verification" } });
+```
+
+### Any Language (HTTP API)
 
 ```bash
 curl -X POST https://api.wirelog.ai/track \
@@ -64,7 +78,7 @@ curl -X POST https://api.wirelog.ai/track \
   -d '{"event_type":"test_event","user_id":"setup-test","origin":"server","event_properties":{"source":"setup-verification"}}'
 ```
 
-The public key (`pk_`) is safe for client-side code — it can only ingest events.
+The public key (`pk_`) is safe for client-side code -- it can only ingest events.
 
 ## Step 4: Verify
 
@@ -82,6 +96,20 @@ You should see your `test_event` (or page views from the JS SDK) in the Markdown
 ## Step 5: Set Up Identity (Recommended)
 
 When a user logs in or signs up, call identify to bind their device to their user ID:
+
+### With JS SDK
+
+```javascript
+wl.identify("alice@acme.org", {email: "alice@acme.org", plan: "free"});
+```
+
+### With TypeScript npm client
+
+```typescript
+wl.identify({ user_id: "alice@acme.org", user_properties: { email: "alice@acme.org", plan: "free" } });
+```
+
+### With HTTP API
 
 ```bash
 curl -X POST https://api.wirelog.ai/identify \
@@ -101,8 +129,8 @@ This enables identity-stitched analytics (`distinct_id`) across anonymous and kn
 | Key prefix | Access level | Safe for client-side? |
 |---|---|---|
 | `pk_` | Track only (ingest events) | Yes |
-| `sk_` | Full access (track + query) | No — server-side only |
-| `ak_` | Org admin (manage projects) | No — server-side only |
+| `sk_` | Full access (track + query) | No -- server-side only |
+| `ak_` | Org admin (manage projects) | No -- server-side only |
 | `aat_` | Scoped access token | Depends on granted scopes |
 
 ## What's Next
@@ -111,5 +139,5 @@ This enables identity-stitched analytics (`distinct_id`) across anonymous and kn
 - Build funnels: `funnel signup -> activate -> purchase | last 30d`
 - Track retention: `retention signup | last 90d`
 - Segment by company: `* | where user.email_domain = "acme.org" | last 30d | count by event_type`
-- Geo + attribution analysis: `ai_usage_charged | where user_last_session.region = "DE" | last 30d | sum event_properties.amount`
-- See query-language docs for full DSL reference
+- Geo + attribution analysis: `sessions | where session.utm_source = "google" | last 30d | count by day`
+- Full query reference: https://docs.wirelog.ai/llms.txt

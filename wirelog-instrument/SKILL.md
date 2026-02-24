@@ -6,7 +6,54 @@ version: 1.0.0
 
 # WireLog Instrumentation Skill
 
-Add analytics event tracking and user identification to any application using WireLog's HTTP API.
+Add analytics event tracking and user identification to any application using WireLog.
+
+For latest documentation: https://docs.wirelog.ai/llms.txt
+
+## Recommended SDKs
+
+Use the official SDKs whenever possible. They handle batching, retries, identity management, and session tracking automatically.
+
+### Browser (JS SDK script tag)
+
+```html
+<script src="https://cdn.wirelog.ai/public/wirelog.js"
+        data-key="pk_YOUR_PUBLIC_KEY"
+        data-host="https://api.wirelog.ai"></script>
+```
+
+Auto-tracks page views, manages `device_id`/`session_id`, batches events, and sets `clientOriginated: true`.
+
+```javascript
+wl.track("button_click", {button: "signup", page: "/pricing"});
+wl.identify("alice@acme.org", {email: "alice@acme.org", plan: "pro"});
+wl.flush();
+```
+
+### TypeScript / Node.js (npm)
+
+```bash
+npm install wirelog
+```
+
+```typescript
+import { wl } from "wirelog";
+
+wl.init({ apiKey: "pk_YOUR_PUBLIC_KEY" });
+
+wl.track({ event_type: "signup", user_id: "u_123", event_properties: { plan: "free" } });
+wl.identify({ user_id: "u_123", user_properties: { name: "Alice", plan: "pro" } });
+```
+
+### Raw HTTP (any language)
+
+If no SDK is available for your language, use the HTTP API directly:
+
+```
+POST /track
+Header: X-API-Key: <pk_ or sk_ or aat_ with track scope>
+Content-Type: application/json
+```
 
 ## API Keys
 
@@ -14,13 +61,34 @@ Add analytics event tracking and user identification to any application using Wi
 - `sk_` (secret key): Full access (query + ingest). Keep server-side only.
 - `aat_` (access token): Scoped permissions (`track`, `query`, `admin`).
 
-## Track Events
+## What to Track
 
-```
-POST /track
-Header: X-API-Key: <pk_ or sk_ or aat_ with track scope>
-Content-Type: application/json
-```
+Choose events that map to your product's key actions. Here are recommended events by use case:
+
+### SaaS / Web App
+- `page_view` (auto-tracked by JS SDK)
+- `signup`, `login`, `logout`
+- `feature_used` with `event_properties.feature` (e.g., "export", "invite", "search")
+- `subscription_started`, `subscription_cancelled`, `payment_completed`
+- `invite_sent`, `team_member_added` (B2B)
+
+### E-Commerce
+- `page_view`, `search`, `item_viewed`, `add_to_cart`, `checkout_started`, `purchase`
+- `coupon_applied`, `review_submitted`
+
+### AI Agent / LLM App
+- `agent_action` with `event_properties.action` (e.g., "query", "tool_call", "response")
+- `agent_error` with `event_properties.error_type`
+- `token_usage` with `event_properties.tokens`
+- `user_feedback` with `event_properties.rating`
+
+### General Best Practices
+- Use `event_properties` for event-specific data (what happened)
+- Use `user_properties` / `/identify` for user-level data (who they are)
+- Send `device_id` on every event for identity stitching
+- Keep event names snake_case and descriptive
+
+## Track Events (HTTP API)
 
 ### Single Event
 
@@ -31,8 +99,6 @@ Content-Type: application/json
   "device_id": "dev_abc",
   "session_id": "sess_xyz",
   "time": "2026-01-15T10:30:00Z",
-  "origin": "client",
-  "clientOriginated": true,
   "event_properties": {"page": "/pricing", "referrer": "google"},
   "user_properties": {"plan": "pro"},
   "insert_id": "dedup-id-optional"
@@ -45,11 +111,9 @@ Only `event_type` is required. All other fields are optional. `time` defaults to
 
 ```json
 {
-  "origin": "client",
-  "clientOriginated": true,
   "events": [
-    {"event_type": "page_view", "user_id": "u_123", "event_properties": {"page": "/home"}, "clientOriginated": true},
-    {"event_type": "click", "user_id": "u_123", "event_properties": {"button": "signup"}, "clientOriginated": true}
+    {"event_type": "page_view", "user_id": "u_123", "event_properties": {"page": "/home"}},
+    {"event_type": "click", "user_id": "u_123", "event_properties": {"button": "signup"}}
   ]
 }
 ```
@@ -62,11 +126,11 @@ Only `event_type` is required. All other fields are optional. `time` defaults to
 
 Invalid events are silently skipped. `accepted` is the count of valid events.
 
-### Origin Hints (Important)
+### Origin Hints
 
-- Set `clientOriginated: true` only when the event truly originated in an end-user runtime (browser/electron/webview).
-- Use `origin: "server"` for pure backend jobs/cron/webhooks.
-- For mixed ingestion, origin hints improve session/user geo rollups and attribution queries.
+- Browser events: set `clientOriginated: true` (JS SDK does this automatically)
+- Server-side events: set `origin: "server"`
+- Origin hints improve session attribution and geo enrichment accuracy
 
 ## Identify Users
 
@@ -93,23 +157,9 @@ Content-Type: application/json
 ```
 
 - `user_id` is required. `device_id` is recommended for identity stitching.
-- `user_properties`: flat key-value set (overwrites).
-- `user_property_ops`: granular operations (`$set`, `$set_once`, `$add`, `$unset`).
+- Response: `{"ok": true}`
 
-### Response
-
-```json
-{"ok": true}
-```
-
-## Identity Semantics
-
-- Send `device_id` on every event and identify call.
-- Call `/identify` when a user is known (login, signup, account link).
-- Stitched identity: `distinct_id = coalesce(user_id, mapped_user_id, device_id)`.
-- Pre-identify anonymous events are attributed after the device is identified.
-
-## Recommended Profile Fields
+### Recommended Profile Fields
 
 For strong B2B/B2C analysis, send these via `/identify`:
 
@@ -117,75 +167,9 @@ For strong B2B/B2C analysis, send these via `/identify`:
 - B2B: `company_id`, `company`, `account_tier`
 - B2C: `acquisition_channel`, `persona`, `country`
 
-## JS SDK (Browser)
+## Identity Semantics
 
-```html
-<script src="https://cdn.wirelog.ai/public/wirelog.js"
-        data-key="pk_YOUR_PUBLIC_KEY"
-        data-host="https://api.wirelog.ai"></script>
-```
-
-The SDK auto-tracks page views, manages `device_id` (localStorage), `session_id` (30-min timeout), sets `clientOriginated: true`, and batches events (flush every 2s or 10 events).
-
-```javascript
-// Track an event
-wl.track("button_click", {button: "signup", page: "/pricing"});
-
-// Identify a user (call on login/signup)
-wl.identify("alice@acme.org", {email: "alice@acme.org", plan: "pro"});
-
-// Manual flush
-wl.flush();
-```
-
-## Server-Side Examples
-
-### curl
-
-```bash
-# Track
-curl -X POST https://api.wirelog.ai/track \
-  -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"event_type":"signup","user_id":"u_123","event_properties":{"plan":"free"}}'
-
-# Identify
-curl -X POST https://api.wirelog.ai/identify \
-  -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"u_123","device_id":"dev_abc","user_properties":{"email":"u_123@acme.org"}}'
-```
-
-### Python (stdlib)
-
-```python
-import json
-from urllib.request import Request, urlopen
-
-def track(event_type, user_id=None, props=None):
-    body = {"event_type": event_type}
-    if user_id:
-        body["user_id"] = user_id
-    if props:
-        body["event_properties"] = props
-    req = Request(
-        "https://api.wirelog.ai/track",
-        data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json", "X-API-Key": "pk_YOUR_KEY"},
-        method="POST",
-    )
-    with urlopen(req) as resp:
-        return json.loads(resp.read())
-
-track("signup", "u_123", {"plan": "free"})
-```
-
-### Node.js (fetch)
-
-```javascript
-await fetch("https://api.wirelog.ai/track", {
-  method: "POST",
-  headers: {"Content-Type": "application/json", "X-API-Key": "pk_YOUR_KEY"},
-  body: JSON.stringify({event_type: "signup", user_id: "u_123", event_properties: {plan: "free"}}),
-});
-```
+- Send `device_id` on every event and identify call.
+- Call `/identify` when a user is known (login, signup, account link).
+- Stitched identity: `distinct_id = coalesce(user_id, mapped_user_id, device_id)`.
+- Pre-identify anonymous events are attributed after the device is identified.
