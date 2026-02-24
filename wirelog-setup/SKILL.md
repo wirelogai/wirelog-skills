@@ -53,6 +53,7 @@ Add to your HTML `<head>`:
 ```
 
 This auto-tracks page views and manages device/session IDs.
+It also marks browser-origin events with `clientOriginated: true`.
 
 ### Server-Side (any language)
 
@@ -60,7 +61,7 @@ This auto-tracks page views and manages device/session IDs.
 curl -X POST https://api.wirelog.ai/track \
   -H "X-API-Key: pk_YOUR_PUBLIC_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"event_type":"test_event","user_id":"setup-test","event_properties":{"source":"setup-verification"}}'
+  -d '{"event_type":"test_event","user_id":"setup-test","origin":"server","event_properties":{"source":"setup-verification"}}'
 ```
 
 The public key (`pk_`) is safe for client-side code — it can only ingest events.
@@ -110,4 +111,5 @@ This enables identity-stitched analytics (`distinct_id`) across anonymous and kn
 - Build funnels: `funnel signup -> activate -> purchase | last 30d`
 - Track retention: `retention signup | last 90d`
 - Segment by company: `* | where user.email_domain = "acme.org" | last 30d | count by event_type`
+- Geo + attribution analysis: `ai_usage_charged | where user_last_session.region = "DE" | last 30d | sum event_properties.amount`
 - See query-language docs for full DSL reference

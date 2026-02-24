@@ -33,6 +33,8 @@ source | stage | stage | ...
 - Funnel: `funnel signup -> activate -> purchase`
 - Retention: `retention signup` or `retention signup returning return_event`
 - Paths: `paths from event` or `paths to event`
+- Lifecycle: `lifecycle active_user`
+- Stickiness: `stickiness core_usage`
 - Sessions: `sessions`
 - Single user timeline: `user "alice@acme.org"`
 - Users directory: `users`
@@ -51,10 +53,13 @@ source | stage | stage | ...
 ### Fields
 
 - Core: `event_type`, `user_id`, `distinct_id`, `device_id`, `session_id`, `time`
-- System: `_browser`, `_os`, `_platform`, `_device_type`, `_ip`
+- System: `_browser`, `_os`, `_platform`, `_device_type`, `_ip`, `_ingest_origin`
+- Geo system fields: `_geo_country`, `_geo_region`, `_geo_city`, `_geo_timezone`, `_geo_latitude`, `_geo_longitude`
 - Event properties: `event_properties.KEY`
 - User properties (on event): `user_properties.KEY`
 - Profile fields: `user.email`, `user.email_domain`, `user.plan`, `user.first_seen`, `user.last_seen`, `user.KEY`
+- Session fields: `session.region`, `session.country`, `session.utm_source`, `session.language`, `session.ingest_origin`
+- Latest identified session fields: `user_last_session.region`, `user_last_session.country`, `user_last_session.utm_source`, `user_last_session.language`
 
 ### Identity
 
@@ -84,18 +89,19 @@ Replace placeholders with your real event names.
 1.  <event_name> | last 7d | count
 2.  <event_name> | last 30d | count by day
 3.  * | last 24h | count by event_type
-4.  <event_name> | where _platform = "web" | last 30d | count
+4.  <event_name> | where session.region = "DE" | last 30d | count
 5.  <signup_event> | last 90d | unique distinct_id by week
 6.  funnel <signup_event> -> <activation_event> -> <purchase_event> | last 30d
 7.  retention <signup_event> | last 90d
 8.  paths from <start_event> | last 30d | depth 8
 9.  sessions | last 7d
 10. users | where email_domain = "acme.org" | list
-11. * | where user.email_domain = "acme.org" | last 30d | count by event_type
+11. * | where user.email_domain = "acme.org" | where user_last_session.region = "DE" | last 30d | count by event_type
 12. user "alice@acme.org" | last 90d | list
 13. formula count(<purchase_event>) / count(<signup_event>) | last 30d
-14. <core_usage_event> | where user.plan = "enterprise" | last 12w | count by week
+14. <core_usage_event> | where user.plan = "enterprise" | where session.utm_source = "google" | last 12w | count by week
 15. * | last 12w | count by user.email_domain | sort count desc | top 20
+16. ai_usage_charged | where user_last_session.region = "DE" | last 30d | sum event_properties.amount
 ```
 
 ## Example curl

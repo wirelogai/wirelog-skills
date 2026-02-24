@@ -31,6 +31,8 @@ Content-Type: application/json
   "device_id": "dev_abc",
   "session_id": "sess_xyz",
   "time": "2026-01-15T10:30:00Z",
+  "origin": "client",
+  "clientOriginated": true,
   "event_properties": {"page": "/pricing", "referrer": "google"},
   "user_properties": {"plan": "pro"},
   "insert_id": "dedup-id-optional"
@@ -43,9 +45,11 @@ Only `event_type` is required. All other fields are optional. `time` defaults to
 
 ```json
 {
+  "origin": "client",
+  "clientOriginated": true,
   "events": [
-    {"event_type": "page_view", "user_id": "u_123", "event_properties": {"page": "/home"}},
-    {"event_type": "click", "user_id": "u_123", "event_properties": {"button": "signup"}}
+    {"event_type": "page_view", "user_id": "u_123", "event_properties": {"page": "/home"}, "clientOriginated": true},
+    {"event_type": "click", "user_id": "u_123", "event_properties": {"button": "signup"}, "clientOriginated": true}
   ]
 }
 ```
@@ -57,6 +61,12 @@ Only `event_type` is required. All other fields are optional. `time` defaults to
 ```
 
 Invalid events are silently skipped. `accepted` is the count of valid events.
+
+### Origin Hints (Important)
+
+- Set `clientOriginated: true` only when the event truly originated in an end-user runtime (browser/electron/webview).
+- Use `origin: "server"` for pure backend jobs/cron/webhooks.
+- For mixed ingestion, origin hints improve session/user geo rollups and attribution queries.
 
 ## Identify Users
 
@@ -115,7 +125,7 @@ For strong B2B/B2C analysis, send these via `/identify`:
         data-host="https://api.wirelog.ai"></script>
 ```
 
-The SDK auto-tracks page views, manages `device_id` (localStorage), `session_id` (30-min timeout), and batches events (flush every 2s or 10 events).
+The SDK auto-tracks page views, manages `device_id` (localStorage), `session_id` (30-min timeout), sets `clientOriginated: true`, and batches events (flush every 2s or 10 events).
 
 ```javascript
 // Track an event
