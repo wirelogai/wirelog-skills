@@ -30,7 +30,8 @@ source | stage | stage | ...
 
 ### Sources
 
-- Event name: `page_view`, `signup`, etc. (use YOUR project's event names)
+- Event name: `page_view`, `signup`, `landing:cta_click`, `docs.view`, `checkout/success`, etc. (use YOUR project's event names)
+- Quoted event name: `"<event_name>"` (useful for special characters or ambiguity)
 - All events: `*`
 - Funnel: `funnel signup -> activate -> purchase`
 - Funnel with exclusion: `funnel signup -> purchase exclude support_ticket` (between-step exclusion, NOT global NOT IN)
@@ -47,7 +48,7 @@ source | stage | stage | ...
 ### Stages
 
 - Filter: `| where field = "value"`, `| where field > 10`, `| where field contains "x"`, `| where field ~ "regex"`
-- Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `not contains`, `~` (regex), `!~`, `in (...)`, `not in (...)`, `exists`, `not exists`
+- Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `not contains`, `~` (regex), `!~`, `in (...)`, `in [...]`, `not in (...)`, `not in [...]`, `exists`, `not exists`
 - Boolean groups: `| where (a = "x" or b = "y") and c = "z"` (nested parentheses supported)
 - Time: `| last 7d`, `| last 12w`, `| from 2026-01-01 to 2026-02-01`, `| today`, `| yesterday`, `| this week`, `| this month`, `| this quarter`, `| this year`
 - Aggregation: `| count`, `| unique distinct_id`, `| sum event_properties.amount`, `| avg field`, `| min field`, `| max field`, `| median field`, `| p90 field`, `| p95 field`, `| p99 field`
@@ -104,6 +105,54 @@ Full inventory:
 
 ```
 * | last 90d | count by event_type | sort event_type asc | limit 10000
+```
+
+If your project only has the Script Tag installed, you'll usually see a lot of `page_view` plus any custom frontend events. Start with `page_view` queries first, then branch out.
+
+## Script-Tag-First Starter Queries (page_view heavy)
+
+Use these immediately after discovery when the dataset is mostly browser traffic:
+
+```
+1.  page_view | last 7d | count by day
+    -- Daily traffic trend
+2.  page_view | last 7d | unique distinct_id by day
+    -- Daily unique visitors (stitched identity)
+3.  page_view | last 30d | count by _path | top 20
+    -- Top pages by path
+4.  page_view | last 30d | count by _path_clean | top 20
+    -- Top pages with dynamic IDs normalized
+5.  page_view | where _path in ["/","/pricing","/docs"] | last 7d | count
+    -- Focus on a specific set of paths (JSON-style list)
+6.  page_view | where _path in ("/","/pricing","/docs") | last 7d | count
+    -- Same as above (SQL-style list)
+7.  page_view | last 30d | count by _browser | top 10
+    -- Browser mix
+8.  page_view | last 30d | count by _country | top 10
+    -- Geographic mix
+9.  paths from page_view | last 30d | by _path
+    -- Navigation flow using URL paths as nodes
+10. sessions | last 30d | count by session.utm_source
+    -- Acquisition channels at session level
+11. sessions | last 30d | count by session.referring_domain | top 20
+    -- Top referring domains
+12. retention page_view | last 90d
+    -- Cohort retention from first visit
+```
+
+If event names include special characters, both direct source and quoted source forms work:
+
+```
+landing:cta_click | last 7d | count
+"landing:cta_click" | last 7d | count
+docs.view | last 7d | count
+checkout/success | last 7d | count
+```
+
+Fallback form when in doubt:
+
+```
+* | where event_type = "landing:cta_click" | last 7d | count
 ```
 
 ## Example Queries
@@ -177,3 +226,9 @@ curl -X POST https://api.wirelog.ai/query \
   -H "Content-Type: application/json" \
   -d '{"q":"* | last 30d | count by event_type | top 20"}'
 ```
+
+For `format: "json"` aggregate-style responses, treat these as canonical when present:
+- `value`: numeric metric value
+- `metric`: metric identifier (`count`, `unique`, `sum`, `avg`, etc.)
+
+Legacy keys (`count`, `unique_count`, `total`, ...) may also be present for compatibility.

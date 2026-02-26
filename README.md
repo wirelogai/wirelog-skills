@@ -21,6 +21,7 @@ npx @anthropic/claude-code skills add wirelogai/wirelog-skills
 Once installed, your coding agent can:
 
 - **Query**: "What are my top events this week?" → agent runs `* | last 7d | count by event_type | top 20`
+- **Query (script-tag-only projects)**: "Show traffic and top pages" → agent runs `page_view | last 7d | count by day` and `page_view | last 30d | count by _path | top 20`
 - **Instrument**: "Add signup tracking" → agent adds `POST /track` calls with proper event schema
 - **Setup**: "Set up WireLog for my project" → agent walks through key creation, SDK setup, verification
 
