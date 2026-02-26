@@ -44,6 +44,7 @@ source | stage | stage | ...
 - Users directory: `users`
 - Formula: `formula count(purchase) / count(signup)`
 - Fields introspection: `fields` (lists all available fields including dynamic property keys)
+- Event inspection: `inspect *` (event type overview with counts, users, top properties) or `inspect <event>` (property-level detail: coverage %, type, sample values)
 
 ### Stages
 
@@ -87,24 +88,42 @@ fields | last 7d
 
 Returns system/core fields plus dynamic `event_properties.*` and `user_properties.*` keys actually present in your data.
 
+### Event inspection
+
+Discover event types and their properties — the recommended first query for new projects:
+
+```
+inspect * | last 30d
+inspect signup | last 7d
+```
+
+`inspect *` returns per-event-type overview: count, unique users, first/last seen, top property keys.
+`inspect <event>` returns property-level detail: coverage %, inferred type (string/numeric/boolean), sample values.
+
 ### Identity
 
 - `distinct_id` = stitched identity: `coalesce(user_id, mapped_user_id, device_id)`.
 - Use `unique distinct_id` for unique user counts.
 - Pre-identify anonymous events are attributed once device-to-user mapping exists.
 
-## IMPORTANT: Discover Event Names First
+## IMPORTANT: Discover Events First
 
-Event names are NOT hardcoded. Run these before writing event-specific queries:
+Event names are NOT hardcoded. Start with inspect to understand the project's data:
+
+```
+inspect * | last 30d
+```
+
+Then inspect specific events to see their properties before writing queries:
+
+```
+inspect signup | last 7d
+```
+
+Alternative discovery (counts only):
 
 ```
 * | last 30d | count by event_type | top 20
-```
-
-Full inventory:
-
-```
-* | last 90d | count by event_type | sort event_type asc | limit 10000
 ```
 
 If your project only has the Script Tag installed, you'll usually see a lot of `page_view` plus any custom frontend events. Start with `page_view` queries first, then branch out.
@@ -216,6 +235,10 @@ Replace placeholders with your real event names.
     -- Top landing page paths
 25. fields | last 7d
     -- Discover all available fields (system + dynamic property keys)
+26. inspect * | last 30d
+    -- Discover all event types with counts, users, and top properties
+27. inspect signup | last 7d
+    -- Inspect a specific event's properties (coverage, types, sample values)
 ```
 
 ## Example curl
