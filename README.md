@@ -2,6 +2,8 @@
 
 [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for [WireLog](https://wirelog.ai) — headless analytics for agents and LLMs.
 
+> Headless alternative to PostHog, Amplitude, and Mixpanel — query analytics with a pipe DSL, get Markdown back.
+
 ## Install
 
 ```bash
