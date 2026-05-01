@@ -128,6 +128,175 @@ Alternative discovery (counts only):
 
 If your project only has the Script Tag installed, you'll usually see a lot of `page_view` plus any custom frontend events. Start with `page_view` queries first, then branch out.
 
+## Agent-Created Dashboards
+
+Use dashboards when the user asks for a shareable report, local dashboard, or many related WireLog queries in one view.
+
+Dashboards are YAML files agents can create, validate, run, view, and export:
+
+```
+wl dashboard schema --output -
+wl dashboard init --output -
+wl dashboard validate --file dashboard.yaml
+wl dashboard validate --file - --json
+wl dashboard run --file dashboard.yaml --json
+wl dashboard run --file dashboard.yaml --var range=7d --format markdown
+wl dashboard view --file dashboard.yaml --open
+wl dashboard view --file ./dashboards
+```
+
+Export modes:
+
+- `report`: fixed data, no key embedded. Prefer this for sharing.
+- `interactive`: embeds an `aat_` token with query scope so controls can re-query from the browser. Never use `sk_`, `pk_`, or `ak_`.
+
+```
+wl dashboard save --file dashboard.yaml --output index.html --mode report
+wl dashboard save --file dashboard.yaml --output - --mode report
+wl dashboard save --file dashboard.yaml --output index.html --mode interactive --token-env WIRELOG_DASHBOARD_TOKEN
+```
+
+Interactive exports written to files use `0600` permissions because the HTML contains the token.
+Use `wl dashboard view --file <dir>` for a dashboard directory; the UI renders a sidebar for `.yaml` and `.yml` files.
+
+Dashboard root fields:
+- `order: 10` controls directory sidebar order; leave gaps like 10, 20, 30.
+- `timezone: UTC` controls display timezone; use the user's preferred IANA timezone when known.
+- `refresh: 60s` sets default live refresh.
+
+Start every dashboard from discovery:
+
+```
+wl query "inspect * | last 30d" --json
+wl query "* | last 30d | count by event_type | top 20" --json
+```
+
+Dashboard variables are shared anchors. Use them when one date range or segment should control multiple cards:
+
+```yaml
+version: 1
+title: Product Growth
+order: 10
+refresh: 60s
+timezone: UTC
+
+variables:
+  range:
+    label: Range
+    type: select
+    default: 30d
+    options:
+      - label: 7d
+        value: 7d
+      - label: 30d
+        value: 30d
+  platform:
+    label: Platform
+    type: select
+    default: all
+    options:
+      - label: All
+        value: all
+        fragment: ""
+      - label: Web
+        value: web
+        fragment: '| where _platform = "web"'
+
+sections:
+  - title: Acquisition
+    cards:
+      - id: acquisition-trends
+        title: Acquisition Trends
+        kind: chart
+        viz: line
+        layout: {w: 12, h: 4}
+        queries:
+          - name: Signups
+            query: signup | last {{range}} {{platform.fragment}} | count by day
+          - name: Activations
+            query: activate | last {{range}} {{platform.fragment}} | count by day
+```
+
+Dynamic dropdowns can come from data:
+
+```yaml
+variables:
+  country:
+    label: Country
+    type: select
+    default: all
+    options:
+      - label: All
+        value: all
+        fragment: ""
+    query: '* | last 30d | count by _country | top 25'
+    value_column: _country
+    label_column: _country
+    fragment_template: '| where _country = "{{value}}"'
+```
+
+User lookup dashboards use submitted input variables with safe named fragments:
+
+```yaml
+variables:
+  subject:
+    label: User
+    type: input
+    input: email
+    required: true
+    submit: true
+    placeholder: "email or *@example.com"
+    allow_domain_wildcard: true
+    fragments:
+      events:
+        exact_field: user.email
+        domain_field: user.email_domain
+      users:
+        exact_field: email
+        domain_field: email_domain
+
+sections:
+  - title: User
+    cards:
+      - id: user-profile
+        title: Profile
+        kind: users
+        viz: table
+        query: 'users {{subject.users_fragment}} | list'
+      - id: recent-events
+        title: Recent Events
+        kind: events
+        viz: event-stream
+        query: '* {{subject.events_fragment}} | last {{range}} | list | limit 100'
+```
+
+Use chart options when column inference could be ambiguous:
+
+```yaml
+options: {x: day, y: value, series: _browser}
+query: 'page_view | last {{range}} | count by day, _browser | top 50'
+```
+
+Dashboard-side ratios use two normal aggregate queries:
+
+```yaml
+options: {calculate: ratio, x: day, y: value}
+queries:
+  - name: Purchases
+    query: purchase | last {{range}} | count by day
+  - name: Signups
+    query: signup | last {{range}} | count by day
+```
+
+Rules:
+
+- Use real event names discovered from `inspect *`; do not invent project-specific events.
+- Use `query` for one series and `queries` for overlays/comparisons.
+- Use `select` variables for dropdowns; use `input` only with safe named fragments.
+- Never splice raw user text into queries.
+- Use `options.x`, `options.y`, and `options.series` when chart columns are ambiguous.
+- Validate before saving or exporting.
+
 ## Script-Tag-First Starter Queries (page_view heavy)
 
 Use these immediately after discovery when the dataset is mostly browser traffic:
