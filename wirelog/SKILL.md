@@ -158,6 +158,7 @@ wl dashboard save --file dashboard.yaml --output index.html --mode interactive -
 
 Interactive exports written to files use `0600` permissions because the HTML contains the token.
 Use `wl dashboard view --file <dir>` for a dashboard directory; the UI renders a sidebar for `.yaml` and `.yml` files.
+Directory dashboards have stable local routes like `/dashboard/usage.yaml`; extensionless routes like `/dashboard/usage` work when unambiguous.
 
 Dashboard root fields:
 - `order: 10` controls directory sidebar order; leave gaps like 10, 20, 30.
