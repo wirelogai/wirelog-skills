@@ -53,6 +53,7 @@ source | stage | stage | ...
 - Boolean groups: `| where (a = "x" or b = "y") and c = "z"` (nested parentheses supported)
 - Time: `| last 7d`, `| last 12w`, `| from 2026-01-01 to 2026-02-01`, `| today`, `| yesterday`, `| this week`, `| this month`, `| this quarter`, `| this year`
 - Aggregation: `| count`, `| unique distinct_id`, `| sum event_properties.amount`, `| avg field`, `| min field`, `| max field`, `| median field`, `| p90 field`, `| p95 field`, `| p99 field`
+- Latest value per entity: `| latest event_properties.theme [per distinct_id]`; aggregate with `count by last_value` or list `entity`, `last_value`, `set_at`
 - Group by: `| count by day`, `| count by week, _browser`, `| unique distinct_id by user.email_domain`
 - List: `| list` (raw event rows)
 - Sort: `| sort field desc`, `| sort count asc`
@@ -105,6 +106,8 @@ inspect signup | last 7d
 - `distinct_id` = stitched identity: `coalesce(user_id, mapped_user_id, device_id)`.
 - Use `unique distinct_id` for unique user counts.
 - Pre-identify anonymous events are attributed once device-to-user mapping exists.
+- For durable current user state, prefer `identify`/profile properties and query `users | count by user.theme`.
+- For event-only setter/change history, use `themeSwitch | latest event_properties.theme | count by last_value | top 10`.
 
 ## IMPORTANT: Discover Events First
 
