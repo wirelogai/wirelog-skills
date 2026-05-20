@@ -19,7 +19,8 @@ Use the official SDKs whenever possible. They handle batching, retries, identity
 ```html
 <script src="https://cdn.wirelog.ai/public/wirelog.js"
         data-key="pk_YOUR_PUBLIC_KEY"
-        data-host="https://api.wirelog.ai"></script>
+        data-host="https://api.wirelog.ai"
+        data-env="production"></script>
 ```
 
 Auto-tracks page views, manages `device_id`/`session_id`, batches events, and sets `clientOriginated: true`.
@@ -27,6 +28,10 @@ Auto-tracks page views, manages `device_id`/`session_id`, batches events, and se
 ```javascript
 wl.track("button_click", {button: "signup", page: "/pricing"});
 wl.identify("alice@acme.org", {email: "alice@acme.org", plan: "pro"});
+wl.choice("landing_h1", [
+  {key: "welcome", value: "landing.h1.welcome"},
+  {key: "best", value: "landing.h1.best"},
+]);
 wl.flush();
 ```
 
@@ -43,6 +48,10 @@ wl.init({ apiKey: "pk_YOUR_PUBLIC_KEY" });
 
 wl.track({ event_type: "signup", user_id: "u_123", event_properties: { plan: "free" } });
 wl.identify({ user_id: "u_123", user_properties: { name: "Alice", plan: "pro" } });
+wl.choice("checkout_cta", [
+  { key: "start", value: "Start free" },
+  { key: "build", value: "Build now" },
+]);
 ```
 
 ### Raw HTTP (any language)
@@ -57,7 +66,7 @@ Content-Type: application/json
 
 ## API Keys
 
-- `pk_` (public key): Safe for client-side code. Can only ingest events.
+- `pk_` (public key): Safe for client-side code. Can ingest events.
 - `sk_` (secret key): Full access (query + ingest). Keep server-side only.
 - `aat_` (access token): Scoped permissions (`track`, `query`, `admin`).
 
@@ -131,6 +140,22 @@ Invalid events are silently skipped. `accepted` is the count of valid events.
 - Browser events: set `clientOriginated: true` (JS SDK does this automatically)
 - Server-side events: set `origin: "server"`
 - Origin hints improve session attribution and geo enrichment accuracy
+
+### Exposure Events
+
+Choices log exposure through the normal ingest path as `wirelog.exposure`.
+Only log exposure when code actually uses the decision.
+SDK `choice(...)` helpers log exposure by default; `assignment(..., {expose:
+false})` evaluates without logging.
+
+Canonical properties include `environment_key`, `choice_key`, `choice_kind`,
+`choice_version`, `variant_key`, `variant_weight`, `randomization_unit`,
+`subject_key_hash`, `assignment_id`, `allocation_key`, `reason`, and
+`payload_hash`.
+
+For internationalized copy, keep variant `key` stable and translate the
+selected `value` after assignment. Configure a stable choice seed/project ID
+when assignments must survive API key rotation.
 
 ## Identify Users
 

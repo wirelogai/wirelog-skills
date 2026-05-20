@@ -51,10 +51,12 @@ Add the JS SDK to your HTML `<head>`:
 ```html
 <script src="https://cdn.wirelog.ai/public/wirelog.js"
         data-key="pk_YOUR_PUBLIC_KEY"
-        data-host="https://api.wirelog.ai"></script>
+        data-host="https://api.wirelog.ai"
+        data-env="production"></script>
 ```
 
-This auto-tracks page views and manages device/session IDs.
+This auto-tracks page views, manages device/session IDs, and supports local
+`choice()` assignment.
 
 ### TypeScript / Node.js
 
@@ -128,8 +130,8 @@ This enables identity-stitched analytics (`distinct_id`) across anonymous and kn
 
 | Key prefix | Access level | Safe for client-side? |
 |---|---|---|
-| `pk_` | Track only (ingest events) | Yes |
-| `sk_` | Full access (track + query) | No -- server-side only |
+| `pk_` | Track events | Yes |
+| `sk_` | Full project access (track + query + admin) | No -- server-side only |
 | `ak_` | Org admin (manage projects) | No -- server-side only |
 | `aat_` | Scoped access token | Depends on granted scopes |
 
@@ -140,4 +142,5 @@ This enables identity-stitched analytics (`distinct_id`) across anonymous and kn
 - Track retention: `retention signup | last 90d`
 - Segment by company: `* | where user.email_domain = "acme.org" | last 30d | count by event_type`
 - Geo + attribution analysis: `sessions | where session.utm_source = "google" | last 30d | count by day`
+- Choices: use SDK `choice()` for lightweight experiments, then query `choice <key> | results`
 - Full query reference: https://docs.wirelog.ai/llms.txt

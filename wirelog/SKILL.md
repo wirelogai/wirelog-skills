@@ -45,6 +45,7 @@ source | stage | stage | ...
 - Formula: `formula count(purchase) / count(signup)`
 - Fields introspection: `fields` (lists all available fields including dynamic property keys)
 - Event inspection: `inspect *` (event type overview with counts, users, top properties) or `inspect <event>` (property-level detail: coverage %, type, sample values)
+- Choice source: `choice <choice_key>` for client-side `wirelog.choice()` results
 
 ### Stages
 
@@ -59,6 +60,7 @@ source | stage | stage | ...
 - Sort: `| sort field desc`, `| sort count asc`
 - Limit: `| limit 100`, `| top 20`
 - Paths/funnel: `| window 7d`, `| depth 8`
+- Choices: `| results <conversion_event>`, `| window 7d`, `| unit user_id`.
 
 ### Fields
 
@@ -127,6 +129,27 @@ Alternative discovery (counts only):
 
 ```
 * | last 30d | count by event_type | top 20
+```
+
+## Choices
+
+Use this workflow when asked to analyze a `wirelog.choice()` experiment:
+
+```
+wl query "inspect * | last 30d" --json
+wl choice results landing_h1 --conversion signup --window 7d
+wl query "choice landing_h1 | results signup | window 7d | unit user_id" --json
+```
+
+Choices are declared in application code with `choice()`, resolve
+synchronously, and record exposures asynchronously. Use `unit user_id` for the
+usual product experiment case and `unit device_id` for anonymous visitor tests.
+
+Useful analysis queries:
+
+```
+choice landing_h1 | results signup | window 7d | unit user_id
+choice landing_h1 | last 7d | count by variant_key
 ```
 
 If your project only has the Script Tag installed, you'll usually see a lot of `page_view` plus any custom frontend events. Start with `page_view` queries first, then branch out.
