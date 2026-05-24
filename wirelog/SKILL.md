@@ -310,6 +310,8 @@ options: {x: day, y: value, series: _browser}
 query: 'page_view | last {{range}} | count by day, _browser | top 50'
 ```
 
+Line, area, and bar cards render time bucket columns on chronological axes and align multi-series buckets; missing bucket values display as gaps. For grouped time queries, set `options.x`, `options.y`, and `options.series` explicitly.
+
 Dashboard-side ratios use two normal aggregate queries:
 
 ```yaml
