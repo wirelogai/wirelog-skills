@@ -141,6 +141,13 @@ wl choice results landing_h1 --conversion signup --window 7d
 wl query "choice landing_h1 | results signup | window 7d | unit user_id" --json
 ```
 
+When running multiple independent checks, prefer one CLI call with repeated
+`--query` flags instead of asking the shell to manage several commands:
+
+```
+wl query --query "inspect * | last 30d" --query "* | last 30d | count by event_type | top 20" --json
+```
+
 Choices are declared in application code with `choice()`, resolve
 synchronously, and record exposures asynchronously. Use `unit user_id` for the
 usual product experiment case and `unit device_id` for anonymous visitor tests.
@@ -194,8 +201,7 @@ Dashboard root fields:
 Start every dashboard from discovery:
 
 ```
-wl query "inspect * | last 30d" --json
-wl query "* | last 30d | count by event_type | top 20" --json
+wl query --query "inspect * | last 30d" --query "* | last 30d | count by event_type | top 20" --json
 ```
 
 Dashboard variables are shared anchors. Use them when one date range or segment should control multiple cards:
