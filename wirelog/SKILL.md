@@ -14,7 +14,7 @@ For latest documentation: https://docs.wirelog.ai/llms.txt
 
 ```
 POST /query
-Header: X-API-Key: <sk_ or aat_ with query scope>
+Header: X-API-Key: <personal aat_ query token or sk_>
 Content-Type: application/json
 
 {"q": "<query>", "format": "llm"}
@@ -181,7 +181,7 @@ wl dashboard view --file ./dashboards
 Export modes:
 
 - `report`: fixed data, no key embedded. Prefer this for sharing.
-- `interactive`: embeds an `aat_` token with query scope so controls can re-query from the browser. Never use `sk_`, `pk_`, or `ak_`.
+- `interactive`: embeds a query-scoped `aat_` token so controls can re-query from the browser. Team members should use their own personal query token. Never use `sk_`, `pk_`, or `ak_`.
 
 ```
 wl dashboard save --file dashboard.yaml --output index.html --mode report
@@ -204,7 +204,7 @@ Start every dashboard from discovery:
 wl query --query "inspect * | last 30d" --query "* | last 30d | count by event_type | top 20" --json
 ```
 
-Dashboard variables are shared anchors. Use them when one date range or segment should control multiple cards:
+Dashboards automatically get a built-in `range` date-range control unless they define `variables.range`. Use `{{range.stage}}` to insert a full time stage; use variables for shared segments:
 
 ```yaml
 version: 1
@@ -216,13 +216,8 @@ timezone: UTC
 variables:
   range:
     label: Range
-    type: select
+    type: date_range
     default: 30d
-    options:
-      - label: 7d
-        value: 7d
-      - label: 30d
-        value: 30d
   platform:
     label: Platform
     type: select
@@ -245,9 +240,9 @@ sections:
         layout: {w: 12, h: 4}
         queries:
           - name: Signups
-            query: signup | last {{range}} {{platform.fragment}} | count by day
+            query: signup {{range.stage}} {{platform.fragment}} | count by day
           - name: Activations
-            query: activate | last {{range}} {{platform.fragment}} | count by day
+            query: activate {{range.stage}} {{platform.fragment}} | count by day
 ```
 
 Dynamic dropdowns can come from data:
@@ -300,14 +295,14 @@ sections:
         title: Recent Events
         kind: events
         viz: event-stream
-        query: '* {{subject.events_fragment}} | last {{range}} | list | limit 100'
+        query: '* {{subject.events_fragment}} {{range.stage}} | list | limit 100'
 ```
 
 Use chart options when column inference could be ambiguous:
 
 ```yaml
 options: {x: day, y: value, series: _browser}
-query: 'page_view | last {{range}} | count by day, _browser | top 50'
+query: 'page_view {{range.stage}} | count by day, _browser | top 50'
 ```
 
 Line, area, and bar cards render time bucket columns on chronological axes and align multi-series buckets; missing bucket values display as gaps. For grouped time queries, set `options.x`, `options.y`, and `options.series` explicitly.
@@ -318,15 +313,16 @@ Dashboard-side ratios use two normal aggregate queries:
 options: {calculate: ratio, x: day, y: value}
 queries:
   - name: Purchases
-    query: purchase | last {{range}} | count by day
+    query: purchase {{range.stage}} | count by day
   - name: Signups
-    query: signup | last {{range}} | count by day
+    query: signup {{range.stage}} | count by day
 ```
 
 Rules:
 
 - Use real event names discovered from `inspect *`; do not invent project-specific events.
 - Use `query` for one series and `queries` for overlays/comparisons.
+- Use the built-in `{{range.stage}}` for dashboard-wide date windows; old `| last {{range}}` templates are accepted for compatibility.
 - Use `select` variables for dropdowns; use `input` only with safe named fragments.
 - Never splice raw user text into queries.
 - Use `options.x`, `options.y`, and `options.series` when chart columns are ambiguous.
