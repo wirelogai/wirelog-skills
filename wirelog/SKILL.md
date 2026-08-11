@@ -51,14 +51,14 @@ source | stage | stage | ...
 
 - Filter: `| where field = "value"`, `| where field > 10`, `| where field contains "x"`, `| where field ~ "regex"`
 - Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `not contains`, `~` (regex), `!~`, `in (...)`, `in [...]`, `not in (...)`, `not in [...]`, `exists`, `not exists`
-- Boolean groups: `| where (a = "x" or b = "y") and c = "z"` (nested parentheses supported)
+- Boolean groups: `| where (a = "x" or b = "y") and c = "z"` (up to 32 nested parenthesized groups)
 - Time: `| last 7d`, `| last 12w`, `| from 2026-01-01 to 2026-02-01`, `| today`, `| yesterday`, `| this week`, `| this month`, `| this quarter`, `| this year`
 - Aggregation: `| count`, `| unique distinct_id`, `| sum event_properties.amount`, `| avg field`, `| min field`, `| max field`, `| median field`, `| p90 field`, `| p95 field`, `| p99 field`
 - Latest value per entity: `| latest event_properties.theme [per distinct_id]`; aggregate with `count by last_value` or list `entity`, `last_value`, `set_at`
 - Group by: `| count by day`, `| count by week, _browser`, `| unique distinct_id by user.email_domain`
 - List: `| list` (raw event rows)
 - Sort: `| sort field desc`, `| sort count asc`
-- Limit: `| limit 100`, `| top 20`
+- Limit: `| limit 100`, `| top 20` (maximum 10,000 rows)
 - Paths/funnel: `| window 7d`, `| depth 8`
 - Choices: `| results <conversion_event>`, `| window 7d`, `| unit user_id`.
 
