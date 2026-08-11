@@ -51,7 +51,7 @@ source | stage | stage | ...
 
 - Filter: `| where field = "value"`, `| where field > 10`, `| where field contains "x"`, `| where field ~ "regex"`
 - Operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `not contains`, `~` (regex), `!~`, `in (...)`, `in [...]`, `not in (...)`, `not in [...]`, `exists`, `not exists`
-- Boolean groups: `| where (a = "x" or b = "y") and c = "z"` (up to 32 nested parenthesized groups)
+- Boolean groups: `| where (a = "x" or b = "y") and c = "z"` (up to 32 nested parenthesized groups; filters remain inside the authenticated project scope)
 - Time: `| last 7d`, `| last 12w`, `| from 2026-01-01 to 2026-02-01`, `| today`, `| yesterday`, `| this week`, `| this month`, `| this quarter`, `| this year`
 - Aggregation: `| count`, `| unique distinct_id`, `| sum event_properties.amount`, `| avg field`, `| min field`, `| max field`, `| median field`, `| p90 field`, `| p95 field`, `| p99 field`
 - Latest value per entity: `| latest event_properties.theme [per distinct_id]`; aggregate with `count by last_value` or list `entity`, `last_value`, `set_at`
