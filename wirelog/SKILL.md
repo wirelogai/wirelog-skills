@@ -305,7 +305,9 @@ options: {x: day, y: value, series: _browser}
 query: 'page_view {{range.stage}} | count by day, _browser | top 50'
 ```
 
-Line, area, and bar cards render time bucket columns on chronological axes and align multi-series buckets; missing bucket values display as gaps. For grouped time queries, set `options.x`, `options.y`, and `options.series` explicitly.
+Line, area, and bar cards render time bucket columns on chronological axes and align multi-series buckets; missing bucket values display as gaps. Line and area charts keep the active bucket live, draw its final segment as dashed, and mark its tooltip `partial`. For grouped time queries, set `options.x`, `options.y`, and `options.series` explicitly.
+
+Local and interactive dashboards progressively run visible cards in layout order, two at a time, so the first row can render before lower rows finish querying.
 
 Dashboard-side ratios use two normal aggregate queries:
 
