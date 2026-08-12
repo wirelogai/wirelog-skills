@@ -307,7 +307,7 @@ query: 'page_view {{range.stage}} | count by day, _browser | top 50'
 
 Line, area, and bar cards render time bucket columns on chronological axes and align multi-series buckets; missing bucket values display as gaps. Line and area charts keep the active bucket live, draw its final segment as dashed, and mark its tooltip `partial`. For grouped time queries, set `options.x`, `options.y`, and `options.series` explicitly.
 
-Local and interactive dashboards progressively run visible cards in layout order, two at a time, so the first row can render before lower rows finish querying.
+Local and interactive dashboards progressively load visible cards in layout order. They coalesce up to eight cards into one request, deduplicate identical rendered queries across the batch, and run at most eight query jobs concurrently. Cards entering the viewport settle for 400 ms. Query rate limits are surfaced immediately instead of being retried invisibly.
 
 Dashboard-side ratios use two normal aggregate queries:
 
@@ -457,3 +457,5 @@ For `format: "json"` aggregate-style responses, treat these as canonical when pr
 - `metric`: metric identifier (`count`, `unique`, `sum`, `avg`, etc.)
 
 Legacy keys (`count`, `unique_count`, `total`, ...) may also be present for compatibility.
+
+`rows_scanned` reports ClickHouse source rows read while executing the query, not result rows returned.
