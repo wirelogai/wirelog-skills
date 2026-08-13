@@ -29,7 +29,7 @@ Once installed, your coding agent can:
 
 ## What is WireLog?
 
-Headless analytics for AI agents. Track events with HTTP, query with pipes, get Markdown back. No dashboards — your agent is the dashboard.
+Query-first analytics for AI agents. Track events with HTTP, query with pipes, and sync source-controlled YAML dashboards when humans need a shared project view.
 
 - 10M events free, $5/million after
 - Pipe DSL: `signup | last 7d | count by day`

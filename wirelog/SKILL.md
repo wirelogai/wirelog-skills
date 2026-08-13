@@ -163,9 +163,9 @@ If your project only has the Script Tag installed, you'll usually see a lot of `
 
 ## Agent-Created Dashboards
 
-Use dashboards when the user asks for a shareable report, local dashboard, or many related WireLog queries in one view.
+Use dashboards when the user asks for a shared project view, local dashboard, report, or many related WireLog queries in one view.
 
-Dashboards are YAML files agents can create, validate, run, view, and export:
+Dashboards are source-controlled YAML files agents can create, validate, run, view, export, and sync:
 
 ```
 wl dashboard schema --output -
@@ -176,6 +176,8 @@ wl dashboard run --file dashboard.yaml --json
 wl dashboard run --file dashboard.yaml --var range=7d --format markdown
 wl dashboard view --file dashboard.yaml --open
 wl dashboard view --file ./dashboards
+wl dashboard sync --file dashboard.yaml
+wl dashboard sync --file ./dashboards --visibility project
 ```
 
 Export modes:
@@ -193,7 +195,10 @@ Interactive exports written to files use `0600` permissions because the HTML con
 Use `wl dashboard view --file <dir>` for a dashboard directory; the UI renders a sidebar for `.yaml` and `.yml` files.
 Directory dashboards have stable local routes like `/dashboard/usage.yaml`; extensionless routes like `/dashboard/usage` work when unambiguous.
 
+Use `wl dashboard sync --file <path>` to version validated YAML in the API credential's project and render it inline on the authenticated project page. Add a stable root `id`. Personal `aat_` tokens need `dashboards` scope; use `--visibility project` for current project members. Omitted visibility preserves an existing dashboard's access. Sync never creates a standalone/public URL and never accepts a project ID.
+
 Dashboard root fields:
+- `id: product-growth` is the stable lowercase server identity.
 - `order: 10` controls directory sidebar order; leave gaps like 10, 20, 30.
 - `timezone: UTC` controls display timezone; use the user's preferred IANA timezone when known.
 - `refresh: 60s` sets default live refresh.
@@ -208,6 +213,7 @@ Dashboards automatically get a built-in `range` date-range control unless they d
 
 ```yaml
 version: 1
+id: product-growth
 title: Product Growth
 order: 10
 refresh: 60s
@@ -307,7 +313,7 @@ query: 'page_view {{range.stage}} | count by day, _browser | top 50'
 
 Line, area, and bar cards render time bucket columns on chronological axes and align multi-series buckets; missing bucket values display as gaps. Line and area charts keep the active bucket live, draw its final segment as dashed, and mark its tooltip `partial`. For grouped time queries, set `options.x`, `options.y`, and `options.series` explicitly.
 
-Local and interactive dashboards progressively load visible cards in layout order. They coalesce up to eight cards into one request, deduplicate identical rendered queries across the batch, and run at most eight query jobs concurrently. Cards entering the viewport settle for 400 ms. Query rate limits are surfaced immediately instead of being retried invisibly.
+Local dashboards start the first two visible cards immediately, then start the next card in layout order whenever one finishes. Each card paints independently. The local server caps the whole dashboard at four active ClickHouse queries; identical in-flight queries are coalesced and recent results use a short, refresh-aware cache. Manual refresh bypasses older cached results while preserving deduplication within that refresh. Interactive exports retain bounded multi-card requests, and synced project dashboards load two cards at a time in visual order. Cards entering the viewport settle for 400 ms. Query rate limits are surfaced immediately instead of being retried invisibly.
 
 Dashboard-side ratios use two normal aggregate queries:
 
