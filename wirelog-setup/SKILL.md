@@ -12,7 +12,7 @@ For latest documentation: https://docs.wirelog.ai/llms.txt
 
 ## Overview
 
-WireLog is headless analytics for AI agents and LLMs. You track events via HTTP, query with a pipe DSL, and get Markdown back. Dashboards stay source-controlled YAML and can optionally sync into authenticated project pages; there is no visual dashboard builder or public sharing layer.
+WireLog is headless analytics for AI agents and LLMs. You track events via HTTP, query with a pipe DSL, and get Markdown back. Dashboards stay source-controlled YAML and can optionally sync into the authenticated project's primary dashboard workspace; there is no visual dashboard builder or public sharing layer.
 
 **Hierarchy:** User -> Organization -> Project(s). Each project gets a `pk_` (public) and `sk_` (secret) key.
 
